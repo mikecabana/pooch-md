@@ -1,0 +1,108 @@
+<html>
+
+<head>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+</head>
+
+<body class="p-4">
+    <div class="flex flex-col gap-2 h-full">
+        <div class="grid grid-cols-6 gap-2 flex-grow">
+            <div class="border border-zinc-500 col-span-4 p-2 rounded" id="events"></div>
+            <div class="border border-zinc-500 col-span-2 p-2 rounded">
+                <button class="rounded bg-blue-500 text-white p-2" id="rooms-btn">Get rooms</button>
+                <button class="rounded bg-blue-500 text-white p-2" id="create-room-btn">Create room</button>
+
+                <div id="rooms" style="margin-top: 1rem;"></div>
+            </div>
+        </div>
+        <div class="h-[150px] flex gap-2">
+            <div class="border border-zinc-500 rounded h-full flex-grow">
+                <textarea id="text" class="h-full w-full border-0 rounded resize-none outline-none focus:ring"
+                    placeholder="message"></textarea>
+            </div>
+            <button id="send-btn" class="border border-zinc-500 p-2 rounded h-full w-[150px]">Send</button>
+        </div>
+    </div>
+
+    <script>
+        let webSocket = new WebSocket(location.origin.replace(/^http/, 'ws'));
+
+        let roomId;
+
+        const handleDisplayRooms = (rooms) => {
+            const roomsEl = document.getElementById('rooms');
+            roomsEl.innerHTML = '';
+
+            for (const roomId of rooms) {
+                const roomIdDiv = document.createElement('div');
+                roomIdDiv.classList = 'grow';
+                roomIdDiv.innerHTML = roomId;
+
+                const roomJoinBtn = document.createElement('button');
+                roomJoinBtn.innerHTML = "Join";
+                roomJoinBtn.classList = 'rounded bg-blue-500 text-white p-2';
+                roomJoinBtn.addEventListener('click', () => {
+                    webSocket.send(JSON.stringify({ type: 'join', payload: { roomId } }));
+                });
+
+                const roomDiv = document.createElement('div');
+                roomDiv.classList = 'flex width-full items-center space-between mb-2';
+                roomDiv.appendChild(roomIdDiv);
+                roomDiv.appendChild(roomJoinBtn);
+
+                roomsEl.appendChild(roomDiv);
+            }
+        }
+
+        webSocket.onmessage = (event) => {
+            const eventsEl = document.getElementById('events');
+
+            const data = JSON.parse(event.data);
+
+            if (data.type === "rooms") {
+                if (data.payload.rooms) {
+                    handleDisplayRooms(data.payload.rooms);
+                }
+            } else if (data.type === "joined") {
+                const div = document.createElement('div');
+                div.innerHTML = `Joined room: ${data.payload.roomId}`;
+                roomId = data.payload.roomId;
+                eventsEl.appendChild(div);
+                if (data.payload.rooms) {
+                    handleDisplayRooms(data.payload.rooms);
+                }
+            } else if (data.type === "message") {
+                const div = document.createElement('div');
+                div.innerHTML = `${data.message}`;
+                eventsEl.appendChild(div);
+            }
+
+        };
+
+        const getRoomsBtnEl = document.getElementById('rooms-btn');
+        getRoomsBtnEl.addEventListener('click', () => {
+            webSocket.send(JSON.stringify({ type: 'rooms' }));
+        });
+
+        const createRoomBtnEl = document.getElementById('create-room-btn');
+        createRoomBtnEl.addEventListener('click', () => {
+            webSocket.send(JSON.stringify({ type: 'create-room' }));
+        });
+
+        const sendBtnEl = document.getElementById('send-btn');
+        sendBtnEl.addEventListener('click', () => {
+            const textareaEl = document.getElementById('text');
+            const textareaValue = textareaEl.value;
+
+            if (textareaValue && textareaValue !== '') {
+                webSocket.send(JSON.stringify({ type: 'message', payload: { message: textareaValue, roomId } }));
+
+                textareaEl.value = "";
+            }
+        });
+
+
+    </script>
+</body>
+
+</html>
