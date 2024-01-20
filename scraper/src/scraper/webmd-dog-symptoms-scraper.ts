@@ -19,7 +19,7 @@ export class WebMDDogSymptomsScraper extends BasePlaywrightScraper {
 
     async scrape(): Promise<ScrapeResult> {
         const url = 'https://www.webmd.com/pets/dogs/symptoms';
-        const symptomSelector = '#ContentPane31 > section.az-index-results.list > ul > li ul li a';
+        const symptomSelector = '#ContentPane30 > article > div > div.article__body > div > section > ul > li > a';
         const symptomContentSelector = '#ContentPane30 > article > div > div.article__body section';
         const results = new ScrapeResult([]);
 

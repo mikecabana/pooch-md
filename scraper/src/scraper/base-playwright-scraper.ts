@@ -10,7 +10,7 @@ export abstract class BasePlaywrightScraper implements IScraper {
     constructor() {}
 
     async launch(): Promise<void> {
-        this.browser = await chromium.launch({ });
+        this.browser = await chromium.launch({ headless: true });
         this.context = await this.browser.newContext({ javaScriptEnabled: false, geolocation: undefined });
         this.page = await this.context.newPage();
     }
